@@ -68,6 +68,37 @@ class Tello:
         
     def frame_post_process_show(self, frame):
         pass
+
+    def takeoff(self):
+        self.sock.sendto(b'takeoff', self.send_address)        
+
+    def joystick(self, amt):
+        cmd = ('rc ' + ' '.join(map(str, amt))).encode(encoding="utf-8")
+        self.sock.sendto(cmd, self.send_address)       
+
+    def down(self, amt):
+        cmd = ('down ' + str(amt)).encode(encoding="utf-8")
+        self.sock.sendto(cmd, self.send_address)       
+
+    def up(self, amt):
+        cmd = ('up ' + str(amt)).encode(encoding="utf-8")
+        self.sock.sendto(cmd, self.send_address)       
+
+    def right(self, amt):
+        cmd = ('right ' + str(amt)).encode(encoding="utf-8")
+        self.sock.sendto(cmd, self.send_address)       
+        
+    def left(self, amt):
+        cmd = ('left ' + str(amt)).encode(encoding="utf-8")
+        self.sock.sendto(cmd, self.send_address)        
+
+    def forward(self, amt):
+        cmd = ('forward ' + str(amt)).encode(encoding="utf-8")
+        self.sock.sendto(cmd, self.send_address)        
+
+    def backward(self, amt):
+        cmd = ('back ' + str(amt)).encode(encoding="utf-8")
+        self.sock.sendto(cmd, self.send_address)        
         
     def send_command(self, cmd, wait_sec=10):
         cmd = cmd.encode(encoding="utf-8")

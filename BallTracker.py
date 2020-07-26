@@ -8,7 +8,8 @@ Created on Sun Jul 26 09:03:44 2020
 import Tello
 import cv2
 
-show_original = False
+show_original = True
+
 
 class MyTello(Tello.Tello):
     
@@ -17,6 +18,13 @@ class MyTello(Tello.Tello):
         self.ball_color_high = ( 50, 255, 255)
         self.bound_width_thres = 0.05
         self.bound_height_thres = 0.05
+        self.ball_w = (0.1, 0.2)
+        self.ball_h = (0.1, 0.2)
+        self.ball_x = 0.3
+        self.ball_y = 0.3
+        self.joy_stick_speed = 20
+        self.max_move_frame_count = 30;
+        self.cur_move_frame_count = 0;
         super().__init__()
         
     def draw_3x3_grid(self, img):
@@ -28,6 +36,10 @@ class MyTello(Tello.Tello):
         return img
         
     def frame_pre_process(self, img):
+        self.cur_move_frame_count += 1
+        if self.cur_move_frame_count > self.max_move_frame_count:
+            self.cur_move_frame_count -= 1
+            
         global show_original
         
         #blacking out background
@@ -47,11 +59,40 @@ class MyTello(Tello.Tello):
         x,y,w,h = cv2.boundingRect(mc)
         vid_res = (img.shape[1], img.shape[0])
         if w > vid_res[0]*self.bound_width_thres and h > vid_res[1]*self.bound_height_thres:
+            if self.cur_move_frame_count == self.max_move_frame_count:
+                self.moveDrone(new_img, x,y,w,h)
             return cv2.rectangle(new_img,(x,y),(x+w,y+h),(0,255,0),2)
         return new_img
     
+    def moveDrone(self, img, x,y,w,h):
+        vid_x, vid_y = img.shape[1], img.shape[0]
+        x_diff = vid_x//2 - (x + w//2)
+        y_diff = vid_y//2 - (y + h//2)
+        j_params = [0, 0, 0, 0]
+        #forward and back
+        if(w < self.ball_w[0] * vid_x or h < self.ball_h[0] * vid_y):
+            j_params[1] = -self.joy_stick_speed
+        elif(w > self.ball_w[1] * vid_x or h > self.ball_h[1] * vid_y):
+            j_params[1] = self.joy_stick_speed
 
+        if abs(x_diff) < self.ball_x*vid_x:
+            if x_diff < 0:
+                j_params[0] = -self.joy_stick_speed
+            else:
+                j_params[0] = self.joy_stick_speed
+
+        if abs(y_diff) < self.ball_y*vid_y:
+            if y_diff < 0:
+                j_params[2] = -self.joy_stick_speed
+            else:
+                j_params[2] = self.joy_stick_speed
+        if j_params[0] != 0 or j_params[1] != 0 or j_params[2] != 0:
+            self.joystick(j_params)
+            self.cur_move_frame_count = 0
+
+                
 t = MyTello()
+t.send_command("takeoff")
 t.start_stream()
 while True:
     cmd = input("Please enter 'end' to terminate : ")
