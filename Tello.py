@@ -128,6 +128,7 @@ class Tello:
         
     def close(self):
         self.send_command('streamoff')
+        self.joystick([0, 0, 0, 0])
         self.send_command('land')
         self.running = False
         time.sleep(0.5)

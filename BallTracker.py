@@ -20,9 +20,9 @@ class MyTello(Tello.Tello):
         self.bound_height_thres = 0.05
         self.ball_w = (0.1, 0.2)
         self.ball_h = (0.1, 0.2)
-        self.ball_x = 0.3
-        self.ball_y = 0.3
-        self.joy_stick_speed = 20
+        self.ball_x = 0.15
+        self.ball_y = 0.15
+        #self.joy_stick_speed = 0.5
         self.max_move_frame_count = 30;
         self.cur_move_frame_count = 0;
         super().__init__()
@@ -68,27 +68,30 @@ class MyTello(Tello.Tello):
         vid_x, vid_y = img.shape[1], img.shape[0]
         x_diff = vid_x//2 - (x + w//2)
         y_diff = vid_y//2 - (y + h//2)
+        z_diff = ((w*h) ** 0.5)/((vid_x*vid_y) ** 0.5)
         j_params = [0, 0, 0, 0]
         #forward and back
-        if(w < self.ball_w[0] * vid_x or h < self.ball_h[0] * vid_y):
-            j_params[1] = -self.joy_stick_speed
-        elif(w > self.ball_w[1] * vid_x or h > self.ball_h[1] * vid_y):
-            j_params[1] = self.joy_stick_speed
+        if z_diff < 0.2:
+            j_params[1] = 200 * int(0.25-z_diff) + 5
+        elif z_diff > 0.3:
+            j_params[1] = -70 * int(z_diff - 0.25) - 5
 
-        if abs(x_diff) < self.ball_x*vid_x:
+        if abs(x_diff) > self.ball_x*vid_x:
+            j_params[0] = int(-0.05*x_diff)
             if x_diff < 0:
-                j_params[0] = -self.joy_stick_speed
+                j_params[0] += 3
             else:
-                j_params[0] = self.joy_stick_speed
+                j_params[0] -= 3
 
-        if abs(y_diff) < self.ball_y*vid_y:
+        if abs(y_diff) > self.ball_y*vid_y:
+            j_params[2] = int(0.095*y_diff)
             if y_diff < 0:
-                j_params[2] = -self.joy_stick_speed
+                j_params[2] -= 3
             else:
-                j_params[2] = self.joy_stick_speed
-        if j_params[0] != 0 or j_params[1] != 0 or j_params[2] != 0:
-            self.joystick(j_params)
-            self.cur_move_frame_count = 0
+                j_params[2] += 5
+        #if j_params[0] != 0 or j_params[1] != 0 or j_params[2] != 0:
+        self.joystick(j_params)
+        #self.cur_move_frame_count = 30
 
                 
 t = MyTello()
